@@ -59,7 +59,7 @@ if menu == "🧮 Simulation" or st.session_state.page == "simulation":
     )
 
     # -------- APL --------
-if type_simulation == "APL":
+    if type_simulation == "APL":
 
     revenu = st.number_input("Revenu mensuel (€)", 0)
     loyer = st.number_input("Loyer (€)", 0)
