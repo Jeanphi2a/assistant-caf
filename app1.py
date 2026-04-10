@@ -59,44 +59,60 @@ if menu == "🧮 Simulation" or st.session_state.page == "simulation":
     )
 
     # -------- APL --------
-    if type_simulation == "APL":
+if type_simulation == "APL":
 
-        revenu = st.number_input("Revenu mensuel (€)", 0)
-        loyer = st.number_input("Loyer (€)", 0)
-        personnes = st.selectbox("Personnes dans le foyer", [1,2,3,4])
+    revenu = st.number_input("Revenu mensuel (€)", 0)
+    loyer = st.number_input("Loyer (€)", 0)
+    personnes = st.selectbox("Nombre de personnes", [1,2,3,4])
+    zone = st.selectbox("Zone", ["Zone 1", "Zone 2", "Zone 3"])
 
-        if st.button("Simuler APL"):
+    if st.button("Simuler APL"):
 
-            # 💥 LOGIQUE SIMPLE
-            base = 300
-            if revenu > 1500:
-                base -= 100
-            if loyer > 500:
-                base += 50
-            if personnes > 1:
-                base += 50
+        # 🔥 plafonds réalistes
+        if zone == "Zone 1":
+            plafond_loyer = 400
+        elif zone == "Zone 2":
+            plafond_loyer = 350
+        else:
+            plafond_loyer = 300
 
-            estimation = max(base, 0)
+        loyer_retenu = min(loyer, plafond_loyer)
 
-            st.write(f"### 💰 Estimation : {estimation} € / mois")
+        # 🔥 base calcul
+        apl = (loyer_retenu * 0.7) - (revenu * 0.1)
 
-            # IA en complément
-            prompt = f"""
-Explique ce résultat APL simplement.
+        # 🔥 bonus foyer
+        apl += (personnes - 1) * 50
 
-revenu={revenu}, loyer={loyer}, personnes={personnes}
-montant={estimation}
+        # 🔥 sécurité
+        apl = max(apl, 0)
+
+        apl = int(apl)
+
+        st.write(f"### 💰 Estimation APL : {apl} € / mois")
+
+        # 🤖 IA explique
+        prompt = f"""
+Explique simplement ce résultat APL :
+
+revenu={revenu}
+loyer={loyer}
+personnes={personnes}
+zone={zone}
+montant={apl}
+
+Sois clair et utile.
 """
 
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role":"system","content":"Expert CAF"},
-                    {"role":"user","content":prompt}
-                ]
-            )
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role":"system","content":"Expert CAF"},
+                {"role":"user","content":prompt}
+            ]
+        )
 
-            st.write(response.choices[0].message.content)
+        st.write(response.choices[0].message.content)
 
     # -------- PRIME ACTIVITÉ --------
     elif type_simulation == "Prime d'activité":
