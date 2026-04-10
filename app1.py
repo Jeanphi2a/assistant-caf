@@ -59,6 +59,7 @@ if menu == "🧮 Simulation" or st.session_state.page == "simulation":
     )
 
     # -------- APL --------
+type_simulation = st.selectbox(...)
 if type_simulation == "APL":
 
     revenu = st.number_input("Revenu mensuel (€)", 0)
