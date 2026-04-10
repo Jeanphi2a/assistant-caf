@@ -59,7 +59,7 @@ if menu == "🧮 Simulation" or st.session_state.page == "simulation":
     )
 
     # -------- APL --------
-    if type_simulation == "APL":
+if type_simulation == "APL":
 
     revenu = st.number_input("Revenu mensuel (€)", 0)
     loyer = st.number_input("Loyer (€)", 0)
@@ -68,7 +68,7 @@ if menu == "🧮 Simulation" or st.session_state.page == "simulation":
 
     if st.button("Simuler APL"):
 
-        # 🔥 plafonds réalistes
+        # 🔥 CALCUL
         if zone == "Zone 1":
             plafond_loyer = 400
         elif zone == "Zone 2":
@@ -78,36 +78,39 @@ if menu == "🧮 Simulation" or st.session_state.page == "simulation":
 
         loyer_retenu = min(loyer, plafond_loyer)
 
-        # 🔥 base calcul
         apl = (loyer_retenu * 0.7) - (revenu * 0.1)
-
-        # 🔥 bonus foyer
         apl += (personnes - 1) * 50
 
-        # 🔥 sécurité
         apl = max(apl, 0)
-
         apl = int(apl)
 
+        # 💰 résultat
         st.write(f"### 💰 Estimation APL : {apl} € / mois")
 
-        # 🤖 IA explique
+        # 🤖 IA EXPLICATION
         prompt = f"""
-Explique simplement ce résultat APL :
+Explique ce résultat APL simplement et intelligemment.
 
+Situation :
 revenu={revenu}
 loyer={loyer}
 personnes={personnes}
 zone={zone}
 montant={apl}
 
-Sois clair et utile.
+Réponds comme un conseiller CAF :
+
+👉 Pourquoi ce montant
+👉 Analyse rapide
+👉 2 conseils utiles
+
+Réponse courte.
 """
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role":"system","content":"Expert CAF"},
+                {"role":"system","content":"Tu es un conseiller CAF expert."},
                 {"role":"user","content":prompt}
             ]
         )
