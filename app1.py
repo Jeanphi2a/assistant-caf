@@ -59,10 +59,6 @@ if menu == "🧮 Simulation" or st.session_state.page == "simulation":
     )
 
     # -------- APL --------
-type_simulation = st.selectbox(
-    "Choisis une aide",
-    ["APL", "Prime d'activité", "RSA"]
-)
 if type_simulation == "APL":
 
     revenu = st.number_input("Revenu mensuel (€)", 0)
