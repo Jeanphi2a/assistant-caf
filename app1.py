@@ -1,7 +1,8 @@
 import streamlit as st
 from openai import OpenAI
 
-client = OpenAI(api_key="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")
+# 🔐 clé sécurisée
+client = OpenAI(api_key=st.secrets["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"])
 
 st.title("Assistant CAF 🤖")
 
@@ -17,13 +18,13 @@ if option == "💬 Agent CAF":
 
     st.subheader("Assistant CAF 🤖")
 
-    for msg in st.session_state.messages:
+    for i, msg in enumerate(st.session_state.messages):
         if msg["role"] == "user":
             st.markdown(f"**🧑 Toi :** {msg['content']}")
         else:
             st.markdown(f"**🤖 Assistant :** {msg['content']}")
-            if st.button("🧮 Faire une simulation", key=f"btn_{msg['content']}"):
-                st.session_state.page = "simulation"
+            if st.button("🧮 Faire une simulation", key=f"btn_{i}"):
+                st.session_state.option = "🧮 Simulation"
 
     with st.form("chat_form", clear_on_submit=True):
         user_input = st.text_input("Écris ton message...")
@@ -41,16 +42,17 @@ if option == "💬 Agent CAF":
                     "content": """
 Tu es un conseiller CAF intelligent.
 
-- Tu peux mentionner le site CAF
-- MAIS tu proposes toujours le simulateur interne
+IMPORTANT :
+- Tu peux mentionner le site officiel de la CAF
+- MAIS tu proposes toujours le simulateur intégré
 
-Réponds :
-- court
-- clair
-- utile
+COMPORTEMENT :
+- Pose des questions
+- Guide étape par étape
+- Réponds court et clair
 
 Si l'utilisateur parle d'aides :
-👉 propose simulation ici
+👉 "Tu peux vérifier sur le site officiel de la CAF, mais tu peux déjà faire une estimation ici 👇"
 """
                 }
             ] + st.session_state.messages
@@ -86,16 +88,25 @@ elif option == "🧮 Simulation":
         if st.button("Simuler APL"):
 
             prompt = f"""
-Simulation APL réaliste
+Tu es un simulateur CAF.
 
+Données :
 revenu={revenu}, loyer={loyer}, code_postal={code_postal},
 situation={situation}, enfants={enfants}, logement={logement}
 
-Réponds :
-👉 Éligibilité
-👉 Estimation
-👉 Explication
-👉 Démarches
+FORMAT STRICT :
+
+Éligibilité : (oui / non / probable)
+
+Montant estimé APL : XX € / mois
+
+Explication : (2 phrases max)
+
+Démarches :
+1. ...
+2. ...
+
+Réponse courte uniquement.
 """
 
             response = client.chat.completions.create(
@@ -123,22 +134,28 @@ Réponds :
         if st.button("Simuler Prime"):
 
             prompt = f"""
-Simulation prime activité réaliste
+Simulation prime activité.
 
 revenu={revenu}, statut={statut}, heures={heures},
 situation={situation}, enfants={enfants}
 
-Réponds :
-👉 Éligibilité
-👉 Estimation
-👉 Explication
-👉 Démarches
+FORMAT STRICT :
+
+Éligibilité : (oui / non / probable)
+
+Montant estimé : XX € / mois
+
+Explication : (2 phrases max)
+
+Démarches :
+1. ...
+2. ...
 """
 
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role":"system","content":"Expert prime activité CAF"},
+                    {"role":"system","content":"Expert CAF"},
                     {"role":"user","content":prompt}
                 ]
             )
@@ -156,22 +173,28 @@ Réponds :
         if st.button("Simuler RSA"):
 
             prompt = f"""
-Simulation RSA réaliste
+Simulation RSA.
 
 revenu={revenu}, situation={situation},
 enfants={enfants}, logement={logement}
 
-Réponds :
-👉 Éligibilité
-👉 Estimation
-👉 Explication
-👉 Démarches
+FORMAT STRICT :
+
+Éligibilité : (oui / non / probable)
+
+Montant estimé RSA : XX € / mois
+
+Explication : (2 phrases max)
+
+Démarches :
+1. ...
+2. ...
 """
 
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role":"system","content":"Expert RSA CAF"},
+                    {"role":"system","content":"Expert RSA"},
                     {"role":"user","content":prompt}
                 ]
             )
