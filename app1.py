@@ -74,22 +74,52 @@ elif menu == "🧮 Simulation":
 
         if st.button("Simuler APL"):
 
-            plafonds = {"Zone 1": 450, "Zone 2": 400, "Zone 3": 350}
-            plafond_loyer = plafonds[zone]
+            # 🔥 plafonds réalistes
+            plafonds = {"Zone 1": 500, "Zone 2": 450, "Zone 3": 400}
+            plafond = plafonds[zone]
 
-            loyer_retenu = min(loyer, plafond_loyer)
+            loyer_retenu = min(loyer, plafond)
 
-            apl = (loyer_retenu * 0.75)
-            apl -= (revenu * 0.25)
-            apl += (personnes - 1) * 80
+            # 💥 calcul dynamique (beaucoup plus fort)
+            apl = loyer_retenu * 0.7
+            apl -= revenu * 0.35   # IMPACT FORT
+            apl += personnes * 120
 
-            if revenu < 1000:
-                apl += 100
+            if revenu < 900:
+                apl += 150
 
             apl = max(apl, 0)
             apl = int(apl)
 
             st.write(f"### 💰 Estimation APL : {apl} € / mois")
+
+            # 🤖 IA
+            prompt = f"""
+Analyse cette situation CAF :
+
+revenu={revenu}
+loyer={loyer}
+personnes={personnes}
+zone={zone}
+apl={apl}
+
+Explique :
+- pourquoi ce montant
+- si c'est faible ou élevé
+- donne 2 conseils utiles
+
+Réponse courte.
+"""
+
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role":"system","content":"Conseiller CAF"},
+                    {"role":"user","content":prompt}
+                ]
+            )
+
+            st.write(response.choices[0].message.content)
 
     # -------- PRIME ACTIVITÉ --------
     elif type_simulation == "Prime d'activité":
@@ -103,11 +133,8 @@ elif menu == "🧮 Simulation":
             if statut == "Chômage":
                 estimation = 0
             else:
-                base = 250
-                bonus = personnes * 70
-                reduction = revenu * 0.2
-
-                estimation = base + bonus - reduction
+                base = 300
+                estimation = base + (personnes * 80) - (revenu * 0.25)
 
             estimation = max(estimation, 0)
             estimation = int(estimation)
@@ -127,13 +154,10 @@ elif menu == "🧮 Simulation":
             if age < 25 and statut == "Salarié":
                 estimation = 0
             else:
-                base = 600 if situation == "Seul" else 900
+                base = 607 if situation == "Seul" else 911
+                estimation = base - (revenu * 0.4)
 
-                if statut == "Salarié":
-                    base -= revenu * 0.3
-
-                estimation = max(base, 0)
-
+            estimation = max(estimation, 0)
             estimation = int(estimation)
 
             st.write(f"### 💰 Estimation : {estimation} € / mois")
