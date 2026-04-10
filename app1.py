@@ -2,8 +2,7 @@ import streamlit as st
 from openai import OpenAI
 
 # 🔐 clé sécurisée
-client = OpenAI(api_key=st.secrets["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"])
-
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 st.title("Assistant CAF 🤖")
 
 if "messages" not in st.session_state:
