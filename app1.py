@@ -8,59 +8,48 @@ st.title("Assistant CAF 🤖")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-option = st.radio("Menu", ["💬 Agent CAF", "🧮 Simulation"])
+if "page" not in st.session_state:
+    st.session_state.page = "chat"
+
+menu = st.radio("Menu", ["💬 Agent CAF", "🧮 Simulation"])
 
 # =========================
-# 💬 AGENT CAF
+# 💬 CHAT
 # =========================
-if option == "💬 Agent CAF":
+if menu == "💬 Agent CAF":
 
     st.subheader("Assistant CAF 🤖")
 
-    for i, msg in enumerate(st.session_state.messages):
-        if msg["role"] == "user":
-            st.markdown(f"**🧑 Toi :** {msg['content']}")
-        else:
-            st.markdown(f"**🤖 Assistant :** {msg['content']}")
-            if st.button("🧮 Faire une simulation", key=f"btn_{i}"):
-                st.session_state.option = "🧮 Simulation"
+    for msg in st.session_state.messages:
+        role = "🧑" if msg["role"] == "user" else "🤖"
+        st.markdown(f"**{role} :** {msg['content']}")
 
-    with st.form("chat_form", clear_on_submit=True):
-        user_input = st.text_input("Écris ton message...")
-        submit = st.form_submit_button("Envoyer")
+    if st.button("🧮 Aller au simulateur"):
+        st.session_state.page = "simulation"
+        st.experimental_rerun()
 
-    if submit and user_input:
+    user_input = st.text_input("Pose ta question")
 
+    if user_input:
         st.session_state.messages.append({"role": "user", "content": user_input})
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": """
-Tu es un conseiller CAF intelligent.
-
-- Pose des questions
-- Guide étape par étape
-- Réponds de façon courte
-
-Si l'utilisateur parle d'aides :
-👉 propose d'utiliser le simulateur
-"""
-                }
-            ] + st.session_state.messages
+            messages=[{
+                "role": "system",
+                "content": "Tu es un conseiller CAF clair et utile."
+            }] + st.session_state.messages
         )
 
         reply = response.choices[0].message.content
         st.session_state.messages.append({"role": "assistant", "content": reply})
 
-        st.rerun()
+        st.experimental_rerun()
 
 # =========================
 # 🧮 SIMULATION
 # =========================
-elif option == "🧮 Simulation":
+if menu == "🧮 Simulation" or st.session_state.page == "simulation":
 
     st.subheader("Simulation CAF")
 
@@ -72,47 +61,37 @@ elif option == "🧮 Simulation":
     # -------- APL --------
     if type_simulation == "APL":
 
-        revenu = st.number_input("Revenus mensuels (€)", 0)
-        loyer = st.number_input("Montant du loyer (€)", 0)
-        code_postal = st.text_input("Code postal")
-        situation = st.selectbox("Situation", ["Seul", "Couple"])
-        enfants = st.selectbox("Nombre d'enfants", [0,1,2,3])
-        logement = st.selectbox("Type logement", ["Appartement", "Maison", "Colocation"])
+        revenu = st.number_input("Revenu mensuel (€)", 0)
+        loyer = st.number_input("Loyer (€)", 0)
+        personnes = st.selectbox("Personnes dans le foyer", [1,2,3,4])
 
         if st.button("Simuler APL"):
 
+            # 💥 LOGIQUE SIMPLE
+            base = 300
+            if revenu > 1500:
+                base -= 100
+            if loyer > 500:
+                base += 50
+            if personnes > 1:
+                base += 50
+
+            estimation = max(base, 0)
+
+            st.write(f"### 💰 Estimation : {estimation} € / mois")
+
+            # IA en complément
             prompt = f"""
-Tu es un expert CAF.
+Explique ce résultat APL simplement.
 
-Analyse cette situation :
-
-revenu={revenu}, loyer={loyer}, code_postal={code_postal},
-situation={situation}, enfants={enfants}, logement={logement}
-
-DONNE UNE RÉPONSE STRUCTURÉE :
-
-👉 Éligibilité : (oui / non / probable)
-
-👉 Montant estimé APL : (donne un chiffre réaliste en €)
-
-👉 Analyse :
-- point 1
-- point 2
-
-👉 Conseils personnalisés :
-- conseil 1
-- conseil 2
-
-👉 Autres aides possibles :
-(si pertinent, parle RSA ou autre)
-
-Réponse courte et utile.
+revenu={revenu}, loyer={loyer}, personnes={personnes}
+montant={estimation}
 """
 
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role":"system","content":"Expert CAF réaliste"},
+                    {"role":"system","content":"Expert CAF"},
                     {"role":"user","content":prompt}
                 ]
             )
@@ -122,35 +101,19 @@ Réponse courte et utile.
     # -------- PRIME ACTIVITÉ --------
     elif type_simulation == "Prime d'activité":
 
-        revenu = st.number_input("Revenu mensuel (€)", 0)
-        statut = st.selectbox(
-            "Statut professionnel",
-            ["Salarié", "Temps partiel", "Indépendant", "Chômage"]
-        )
-        heures = st.number_input("Heures travaillées", 0)
-        situation = st.selectbox("Situation familiale", ["Seul", "Couple"])
-        enfants = st.selectbox("Nombre d'enfants", [0,1,2,3])
+        revenu = st.number_input("Revenu (€)", 0)
+        statut = st.selectbox("Statut", ["Salarié", "Indépendant", "Chômage"])
+        personnes = st.selectbox("Personnes", [1,2,3])
 
         if st.button("Simuler Prime"):
 
-            prompt = f"""
-Analyse CAF prime activité.
+            estimation = 0
+            if revenu < 1500 and statut != "Chômage":
+                estimation = 150 + (personnes * 50)
 
-revenu={revenu}, statut={statut}, heures={heures},
-situation={situation}, enfants={enfants}
+            st.write(f"### 💰 Estimation : {estimation} € / mois")
 
-👉 Éligibilité
-
-👉 Montant estimé (€)
-
-👉 Analyse
-
-👉 Conseils
-
-👉 Autres aides possibles
-
-Réponse courte.
-"""
+            prompt = f"Explique ce résultat de prime activité : {estimation}"
 
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
@@ -165,36 +128,30 @@ Réponse courte.
     # -------- RSA --------
     elif type_simulation == "RSA":
 
-        revenu = st.number_input("Revenu mensuel (€)", 0)
+        age = st.number_input("Âge", 18)
+        revenu = st.number_input("Revenu (€)", 0)
         situation = st.selectbox("Situation", ["Seul", "Couple"])
-        enfants = st.selectbox("Nombre d'enfants", [0,1,2,3])
-        logement = st.selectbox("Logement", ["Locataire", "Gratuit", "Propriétaire"])
 
         if st.button("Simuler RSA"):
 
-            prompt = f"""
-Analyse RSA CAF.
+            if age < 25:
+                estimation = 0
+            else:
+                estimation = 600 if situation == "Seul" else 900
 
-revenu={revenu}, situation={situation},
-enfants={enfants}, logement={logement}
+            if revenu > 500:
+                estimation -= 200
 
-👉 Éligibilité
+            estimation = max(estimation, 0)
 
-👉 Montant estimé RSA (€)
+            st.write(f"### 💰 Estimation : {estimation} € / mois")
 
-👉 Analyse
-
-👉 Conseils personnalisés
-
-👉 Autres aides possibles
-
-Réponse claire.
-"""
+            prompt = f"Explique ce RSA : {estimation}"
 
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role":"system","content":"Expert RSA CAF"},
+                    {"role":"system","content":"Expert RSA"},
                     {"role":"user","content":prompt}
                 ]
             )
