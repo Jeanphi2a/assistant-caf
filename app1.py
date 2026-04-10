@@ -1,8 +1,8 @@
 import streamlit as st
 from openai import OpenAI
 
-# 🔐 clé sécurisée
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
 st.title("Assistant CAF 🤖")
 
 if "messages" not in st.session_state:
@@ -41,17 +41,12 @@ if option == "💬 Agent CAF":
                     "content": """
 Tu es un conseiller CAF intelligent.
 
-IMPORTANT :
-- Tu peux mentionner le site officiel de la CAF
-- MAIS tu proposes toujours le simulateur intégré
-
-COMPORTEMENT :
 - Pose des questions
 - Guide étape par étape
-- Réponds court et clair
+- Réponds de façon courte
 
 Si l'utilisateur parle d'aides :
-👉 "Tu peux vérifier sur le site officiel de la CAF, mais tu peux déjà faire une estimation ici 👇"
+👉 propose d'utiliser le simulateur
 """
                 }
             ] + st.session_state.messages
@@ -82,36 +77,42 @@ elif option == "🧮 Simulation":
         code_postal = st.text_input("Code postal")
         situation = st.selectbox("Situation", ["Seul", "Couple"])
         enfants = st.selectbox("Nombre d'enfants", [0,1,2,3])
-        logement = st.selectbox("Type de logement", ["Appartement", "Maison", "Colocation"])
+        logement = st.selectbox("Type logement", ["Appartement", "Maison", "Colocation"])
 
         if st.button("Simuler APL"):
 
             prompt = f"""
-Tu es un simulateur CAF.
+Tu es un expert CAF.
 
-Données :
+Analyse cette situation :
+
 revenu={revenu}, loyer={loyer}, code_postal={code_postal},
 situation={situation}, enfants={enfants}, logement={logement}
 
-FORMAT STRICT :
+DONNE UNE RÉPONSE STRUCTURÉE :
 
-Éligibilité : (oui / non / probable)
+👉 Éligibilité : (oui / non / probable)
 
-Montant estimé APL : XX € / mois
+👉 Montant estimé APL : (donne un chiffre réaliste en €)
 
-Explication : (2 phrases max)
+👉 Analyse :
+- point 1
+- point 2
 
-Démarches :
-1. ...
-2. ...
+👉 Conseils personnalisés :
+- conseil 1
+- conseil 2
 
-Réponse courte uniquement.
+👉 Autres aides possibles :
+(si pertinent, parle RSA ou autre)
+
+Réponse courte et utile.
 """
 
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role":"system","content":"Expert APL réaliste"},
+                    {"role":"system","content":"Expert CAF réaliste"},
                     {"role":"user","content":prompt}
                 ]
             )
@@ -126,29 +127,29 @@ Réponse courte uniquement.
             "Statut professionnel",
             ["Salarié", "Temps partiel", "Indépendant", "Chômage"]
         )
-        heures = st.number_input("Heures travaillées / mois", 0)
+        heures = st.number_input("Heures travaillées", 0)
         situation = st.selectbox("Situation familiale", ["Seul", "Couple"])
         enfants = st.selectbox("Nombre d'enfants", [0,1,2,3])
 
         if st.button("Simuler Prime"):
 
             prompt = f"""
-Simulation prime activité.
+Analyse CAF prime activité.
 
 revenu={revenu}, statut={statut}, heures={heures},
 situation={situation}, enfants={enfants}
 
-FORMAT STRICT :
+👉 Éligibilité
 
-Éligibilité : (oui / non / probable)
+👉 Montant estimé (€)
 
-Montant estimé : XX € / mois
+👉 Analyse
 
-Explication : (2 phrases max)
+👉 Conseils
 
-Démarches :
-1. ...
-2. ...
+👉 Autres aides possibles
+
+Réponse courte.
 """
 
             response = client.chat.completions.create(
@@ -172,28 +173,28 @@ Démarches :
         if st.button("Simuler RSA"):
 
             prompt = f"""
-Simulation RSA.
+Analyse RSA CAF.
 
 revenu={revenu}, situation={situation},
 enfants={enfants}, logement={logement}
 
-FORMAT STRICT :
+👉 Éligibilité
 
-Éligibilité : (oui / non / probable)
+👉 Montant estimé RSA (€)
 
-Montant estimé RSA : XX € / mois
+👉 Analyse
 
-Explication : (2 phrases max)
+👉 Conseils personnalisés
 
-Démarches :
-1. ...
-2. ...
+👉 Autres aides possibles
+
+Réponse claire.
 """
 
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role":"system","content":"Expert RSA"},
+                    {"role":"system","content":"Expert RSA CAF"},
                     {"role":"user","content":prompt}
                 ]
             )
